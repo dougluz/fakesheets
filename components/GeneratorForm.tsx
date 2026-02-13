@@ -4,10 +4,11 @@ import { ExportFormat, GeneratorConfig } from "../lib/types";
 
 interface GeneratorFormProps {
   onGenerate: (config: GeneratorConfig) => void;
+  onPreview: (config: GeneratorConfig) => void;
   disabled: boolean;
 }
 
-export default function GeneratorForm({ onGenerate, disabled }: GeneratorFormProps) {
+export default function GeneratorForm({ onGenerate, onPreview, disabled }: GeneratorFormProps) {
   const [selectedColumns, setSelectedColumns] = useState<Set<string>>(
     new Set(["firstName", "lastName", "email"])
   );
@@ -153,13 +154,28 @@ export default function GeneratorForm({ onGenerate, disabled }: GeneratorFormPro
         </div>
       </div>
 
-      <button
-        type="submit"
-        disabled={disabled || selectedColumns.size === 0}
-        className="w-full rounded-lg bg-blue-600 px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
-      >
-        {disabled ? "Generating..." : "Generate"}
-      </button>
+      <div className="flex gap-3">
+        <button
+          type="button"
+          disabled={disabled || selectedColumns.size === 0}
+          onClick={() => {
+            const columns = AVAILABLE_COLUMNS.filter((c) => selectedColumns.has(c.key)).map(
+              (c) => c.key
+            );
+            onPreview({ columns, rowCount, format, preview: true });
+          }}
+          className="rounded-lg border border-blue-600 px-6 py-3 text-sm font-semibold text-blue-600 transition-colors hover:bg-blue-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-blue-400 dark:text-blue-400 dark:hover:bg-blue-950"
+        >
+          Preview
+        </button>
+        <button
+          type="submit"
+          disabled={disabled || selectedColumns.size === 0}
+          className="flex-1 rounded-lg bg-blue-600 px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          {disabled ? "Generating..." : "Generate"}
+        </button>
+      </div>
     </form>
   );
 }

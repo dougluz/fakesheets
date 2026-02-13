@@ -32,6 +32,19 @@ self.onmessage = (e: MessageEvent<GeneratorConfig>) => {
       (key) => columnGenerators[key] ?? (() => "")
     );
 
+    if (config.preview) {
+      const rows: string[][] = [];
+      for (let i = 0; i < 5; i++) {
+        const row: string[] = new Array(generators.length);
+        for (let j = 0; j < generators.length; j++) {
+          row[j] = generators[j]();
+        }
+        rows.push(row);
+      }
+      self.postMessage({ type: "preview", headers, rows });
+      return;
+    }
+
     const rows: string[][] = [];
     let generated = 0;
 
