@@ -5,42 +5,53 @@ interface PreviewTableProps {
 
 export default function PreviewTable({ headers, rows }: PreviewTableProps) {
   return (
-    <div className="overflow-x-auto rounded-xl border border-zinc-200 dark:border-zinc-800">
-      <table className="w-full text-left text-sm">
-        <thead>
-          <tr className="border-b border-zinc-200 bg-zinc-100 dark:border-zinc-700 dark:bg-zinc-800">
-            {headers.map((header, i) => (
-              <th
-                key={i}
-                className="whitespace-nowrap px-4 py-2 font-semibold text-zinc-700 dark:text-zinc-300"
-              >
-                {header}
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map((row, i) => (
-            <tr
-              key={i}
-              className={
-                i % 2 === 0
-                  ? "bg-white dark:bg-zinc-900"
-                  : "bg-zinc-50 dark:bg-zinc-850"
-              }
-            >
-              {row.map((cell, j) => (
-                <td
-                  key={j}
-                  className="whitespace-nowrap px-4 py-2 text-zinc-600 dark:text-zinc-400"
+    <div className="bg-surface-dark rounded-2xl border border-border-dark overflow-hidden">
+      <div className="px-6 py-4 border-b border-border-dark flex justify-between items-center bg-slate-800/50">
+        <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wider">
+          Preview Data
+        </h3>
+        <span className="text-xs text-slate-500">
+          Showing {rows.length} rows
+        </span>
+      </div>
+      <div className="overflow-x-auto">
+        <table className="min-w-full divide-y divide-border-dark">
+          <thead className="bg-slate-800">
+            <tr>
+              {headers.map((header, i) => (
+                <th
+                  key={i}
+                  scope="col"
+                  className="px-6 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider"
                 >
-                  {cell}
-                </td>
+                  {header}
+                </th>
               ))}
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody className="bg-surface-dark divide-y divide-border-dark">
+            {rows.map((row, i) => (
+              <tr
+                key={i}
+                className={`transition-colors ${
+                  i % 2 === 0
+                    ? "hover:bg-slate-800/50"
+                    : "bg-slate-800/30 hover:bg-slate-800/50"
+                }`}
+              >
+                {row.map((cell, j) => (
+                  <td
+                    key={j}
+                    className="px-6 py-4 whitespace-nowrap text-sm text-slate-300"
+                  >
+                    {cell}
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }

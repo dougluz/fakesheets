@@ -92,20 +92,22 @@ export default function Home() {
   }, []);
 
   return (
-    <div className="flex min-h-screen items-start justify-center bg-zinc-50 px-4 py-12 font-sans dark:bg-zinc-950">
+    <div className="flex min-h-screen flex-col items-center bg-background-dark px-4 py-12 sm:px-6 lg:px-8">
       <Analytics />
-      <main className="w-full max-w-2xl space-y-8">
-        <div className="space-y-1">
-          <h1 className="text-3xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
+      <header className="mb-10 max-w-2xl text-center">
+        <div className="mb-4 flex items-center justify-center">
+          <span className="material-icons text-primary text-4xl mr-2">table_view</span>
+          <h1 className="text-4xl font-bold tracking-tight text-white">
             Fakesheets
           </h1>
-          <p className="text-sm text-zinc-500 dark:text-zinc-400">
-            Generate fake spreadsheet data instantly. All processing happens in
-            your browser — nothing leaves your device.
-          </p>
         </div>
+        <p className="text-lg text-slate-400">
+          Generate fake spreadsheet data instantly. All processing happens in your browser — nothing leaves your device.
+        </p>
+      </header>
 
-        <div className="rounded-xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+      <main className="w-full max-w-4xl space-y-8">
+        <div className="bg-surface-dark rounded-2xl border border-border-dark p-6 sm:p-8">
           <GeneratorForm
             onGenerate={handleGenerate}
             onPreview={handlePreview}
@@ -124,17 +126,21 @@ export default function Home() {
         />
 
         {error && (
-          <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-800 dark:bg-red-950 dark:text-red-400">
+          <div className="rounded-lg border border-red-800 bg-red-950 px-4 py-3 text-sm text-red-400">
             {error}
           </div>
         )}
 
         {state === "complete" && (
-          <div className="rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700 dark:border-green-800 dark:bg-green-950 dark:text-green-400">
+          <div className="rounded-lg border border-green-800 bg-green-950 px-4 py-3 text-sm text-green-400">
             File generated and downloaded successfully.
           </div>
         )}
       </main>
+
+      <footer className="mt-12 text-center text-sm text-slate-600">
+        <p>© {new Date().getFullYear()} Fakesheets. Designed for testing purposes.</p>
+      </footer>
     </div>
   );
 }
