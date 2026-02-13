@@ -5,6 +5,7 @@ import GeneratorForm from "../components/GeneratorForm";
 import PreviewTable from "../components/PreviewTable";
 import ProgressBar from "../components/ProgressBar";
 import { GeneratorConfig, WorkerMessage } from "../lib/types";
+import { Analytics } from "@vercel/analytics/next"
 
 type AppState = "idle" | "generating" | "complete";
 
@@ -92,6 +93,7 @@ export default function Home() {
 
   return (
     <div className="flex min-h-screen flex-col items-center bg-background-dark px-4 py-12 sm:px-6 lg:px-8">
+      <Analytics />
       <header className="mb-10 max-w-2xl text-center">
         <div className="mb-4 flex items-center justify-center">
           <span className="material-icons text-primary text-4xl mr-2">table_view</span>
