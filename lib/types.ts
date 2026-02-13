@@ -3,6 +3,7 @@ export type ExportFormat = "csv" | "xlsx";
 export interface ColumnDefinition {
   key: string;
   label: string;
+  icon: string;
 }
 
 export interface GeneratorConfig {
