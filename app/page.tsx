@@ -2,6 +2,7 @@
 
 import { useCallback, useRef, useState } from "react";
 import GeneratorForm from "../components/GeneratorForm";
+import PreviewTable from "../components/PreviewTable";
 import ProgressBar from "../components/ProgressBar";
 import { GeneratorConfig, WorkerMessage } from "../lib/types";
 
@@ -11,6 +12,10 @@ export default function Home() {
   const [state, setState] = useState<AppState>("idle");
   const [progress, setProgress] = useState({ current: 0, total: 0 });
   const [error, setError] = useState<string | null>(null);
+  const [previewData, setPreviewData] = useState<{
+    headers: string[];
+    rows: string[][];
+  } | null>(null);
   const workerRef = useRef<Worker | null>(null);
 
   const handleGenerate = useCallback((config: GeneratorConfig) => {
@@ -62,6 +67,29 @@ export default function Home() {
     worker.postMessage(config);
   }, []);
 
+  const handlePreview = useCallback((config: GeneratorConfig) => {
+    const worker = new Worker(
+      new URL("../workers/generator.worker.ts", import.meta.url)
+    );
+
+    worker.onmessage = (e: MessageEvent<WorkerMessage>) => {
+      const msg = e.data;
+      if (msg.type === "preview") {
+        setPreviewData({ headers: msg.headers, rows: msg.rows });
+      } else if (msg.type === "error") {
+        setError(msg.message);
+      }
+      worker.terminate();
+    };
+
+    worker.onerror = (err) => {
+      setError(err.message || "Worker error occurred");
+      worker.terminate();
+    };
+
+    worker.postMessage(config);
+  }, []);
+
   return (
     <div className="flex min-h-screen items-start justify-center bg-zinc-50 px-4 py-12 font-sans dark:bg-zinc-950">
       <main className="w-full max-w-2xl space-y-8">
@@ -78,9 +106,14 @@ export default function Home() {
         <div className="rounded-xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
           <GeneratorForm
             onGenerate={handleGenerate}
+            onPreview={handlePreview}
             disabled={state === "generating"}
           />
         </div>
+
+        {previewData && (
+          <PreviewTable headers={previewData.headers} rows={previewData.rows} />
+        )}
 
         <ProgressBar
           current={progress.current}
