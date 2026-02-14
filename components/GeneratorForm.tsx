@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { AVAILABLE_COLUMNS } from "../lib/columns";
 import { ExportFormat, GeneratorConfig } from "../lib/types";
+import XLSXWarning from "./XLSXWarning";
 
 interface GeneratorFormProps {
   onGenerate: (config: GeneratorConfig) => void;
@@ -113,11 +114,11 @@ export default function GeneratorForm({ onGenerate, onPreview, disabled }: Gener
               id="rowCount"
               type="number"
               min={1}
-              max={500000}
+              max={1000000}
               value={rowCount}
               onChange={(e) => {
                 const v = parseInt(e.target.value, 10);
-                if (!isNaN(v)) setRowCount(Math.max(1, Math.min(500000, v)));
+                if (!isNaN(v)) setRowCount(Math.max(1, Math.min(1000000, v)));
               }}
               className="block w-full rounded-xl border-border-dark bg-slate-900 text-white focus:border-primary focus:ring-primary sm:text-sm py-3 px-4 shadow-sm"
             />
@@ -154,7 +155,7 @@ export default function GeneratorForm({ onGenerate, onPreview, disabled }: Gener
               const columns = AVAILABLE_COLUMNS.filter((c) => selectedColumns.has(c.key)).map(
                 (c) => c.key
               );
-              onPreview({ columns, rowCount, format, preview: true });
+              onPreview({ columns, rowCount, format });
             }}
             className="flex-1 md:flex-none px-6 py-3 rounded-xl text-primary border border-primary/30 hover:bg-primary/10 transition-colors font-medium flex items-center justify-center disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer"
           >
@@ -170,6 +171,10 @@ export default function GeneratorForm({ onGenerate, onPreview, disabled }: Gener
             {disabled ? "Generating..." : "Generate"}
           </button>
         </div>
+
+      </div>
+      <div className="flex w-full md:w-auto">
+        <XLSXWarning format={format} rowCount={rowCount} />
       </div>
     </form>
   );

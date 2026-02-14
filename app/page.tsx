@@ -4,10 +4,15 @@ import { useCallback, useRef, useState } from "react";
 import GeneratorForm from "../components/GeneratorForm";
 import PreviewTable from "../components/PreviewTable";
 import ProgressBar from "../components/ProgressBar";
-import { GeneratorConfig, WorkerMessage } from "../lib/types";
+import { GeneratorConfig, ChunkAssignment, ColumnDefinition } from "../lib/types";
+import { AVAILABLE_COLUMNS } from "../lib/columns";
+import { WorkerPool, createPreviewWorker } from "../lib/workerPool";
+import { AssemblyManager } from "../lib/assemblyManager";
 import { Analytics } from "@vercel/analytics/next"
 
 type AppState = "idle" | "generating" | "complete";
+
+const CHUNK_SIZE = 10000;
 
 export default function Home() {
   const [state, setState] = useState<AppState>("idle");
@@ -17,78 +22,100 @@ export default function Home() {
     headers: string[];
     rows: string[][];
   } | null>(null);
-  const workerRef = useRef<Worker | null>(null);
+  const poolRef = useRef<WorkerPool | null>(null);
+  const assemblyRef = useRef<AssemblyManager | null>(null);
 
   const handleGenerate = useCallback((config: GeneratorConfig) => {
     setState("generating");
-    setProgress({ current: 0, total: config.rowCount });
     setError(null);
+    setPreviewData(null);
 
-    const worker = new Worker(
-      new URL("../workers/generator.worker.ts", import.meta.url)
+    const { columns, rowCount, format } = config;
+
+    const headers = columns.map(
+      (key) => AVAILABLE_COLUMNS.find((c: ColumnDefinition) => c.key === key)?.label ?? key
     );
-    workerRef.current = worker;
 
-    worker.onmessage = (e: MessageEvent<WorkerMessage>) => {
-      const msg = e.data;
-      switch (msg.type) {
-        case "progress":
-          setProgress({ current: msg.current, total: msg.total });
-          break;
-        case "complete": {
-          const url = URL.createObjectURL(msg.blob);
+    const totalChunks = Math.ceil(rowCount / CHUNK_SIZE);
+    const totalRows = rowCount;
+
+    assemblyRef.current = new AssemblyManager(format, headers, totalChunks);
+
+    setProgress({ current: 0, total: totalRows });
+
+    const pool = new WorkerPool(
+      (result) => {
+        if (!assemblyRef.current) return;
+
+        assemblyRef.current.addChunk(result.chunkIndex, result.rows);
+        
+        const progressInfo = assemblyRef.current.getProgress();
+        const rowsCompleted = Math.min(progressInfo.completed * CHUNK_SIZE, totalRows);
+        setProgress({ current: rowsCompleted, total: totalRows });
+
+        if (assemblyRef.current.isComplete()) {
+          const blob = assemblyRef.current.buildBlob();
+          const timestamp = Date.now();
+          const ext = format === "csv" ? "csv" : "xlsx";
+          const filename = `fakesheets-${timestamp}.${ext}`;
+
+          const url = URL.createObjectURL(blob);
           const a = document.createElement("a");
           a.href = url;
-          a.download = msg.filename;
+          a.download = filename;
           document.body.appendChild(a);
           a.click();
           document.body.removeChild(a);
           URL.revokeObjectURL(url);
+
           setState("complete");
-          worker.terminate();
-          workerRef.current = null;
-          break;
+          pool.terminate();
+          poolRef.current = null;
+          assemblyRef.current = null;
         }
-        case "error":
-          setError(msg.message);
-          setState("idle");
-          worker.terminate();
-          workerRef.current = null;
-          break;
+      },
+      (err: Error) => {
+        setError(err.message);
+        setState("idle");
+        if (poolRef.current) {
+          poolRef.current.terminate();
+          poolRef.current = null;
+        }
+        assemblyRef.current = null;
       }
-    };
+    );
 
-    worker.onerror = (err) => {
-      setError(err.message || "Worker error occurred");
-      setState("idle");
-      worker.terminate();
-      workerRef.current = null;
-    };
+    poolRef.current = pool;
 
-    worker.postMessage(config);
+    for (let i = 0; i < totalChunks; i++) {
+      const startRow = i * CHUNK_SIZE;
+      const endRow = Math.min(startRow + CHUNK_SIZE, rowCount);
+      const assignment: ChunkAssignment = {
+        chunkIndex: i,
+        startRow,
+        endRow,
+        config: { columns },
+      };
+      pool.assignChunk(assignment);
+    }
   }, []);
 
   const handlePreview = useCallback((config: GeneratorConfig) => {
-    const worker = new Worker(
-      new URL("../workers/generator.worker.ts", import.meta.url)
-    );
+    const columnLabels: Record<string, string> = {};
+    for (const col of AVAILABLE_COLUMNS) {
+      columnLabels[col.key] = col.label;
+    }
 
-    worker.onmessage = (e: MessageEvent<WorkerMessage>) => {
-      const msg = e.data;
-      if (msg.type === "preview") {
-        setPreviewData({ headers: msg.headers, rows: msg.rows });
-      } else if (msg.type === "error") {
-        setError(msg.message);
+    createPreviewWorker(
+      config,
+      columnLabels,
+      (headers, rows) => {
+        setPreviewData({ headers, rows });
+      },
+      (err: Error) => {
+        setError(err.message);
       }
-      worker.terminate();
-    };
-
-    worker.onerror = (err) => {
-      setError(err.message || "Worker error occurred");
-      worker.terminate();
-    };
-
-    worker.postMessage(config);
+    );
   }, []);
 
   return (
@@ -139,7 +166,7 @@ export default function Home() {
       </main>
 
       <footer className="mt-12 text-center text-sm text-slate-600">
-        <p>© {new Date().getFullYear()} Fakesheets. Designed for testing purposes.</p>
+        <p>© {new Date().getFullYear()} Fakesheets.</p>
       </footer>
     </div>
   );

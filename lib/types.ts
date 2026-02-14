@@ -10,11 +10,20 @@ export interface GeneratorConfig {
   columns: string[];
   rowCount: number;
   format: ExportFormat;
-  preview?: boolean;
 }
 
-export type WorkerMessage =
-  | { type: "progress"; current: number; total: number }
-  | { type: "complete"; blob: Blob; filename: string }
-  | { type: "preview"; headers: string[]; rows: string[][] }
-  | { type: "error"; message: string };
+export interface ChunkConfig {
+  columns: string[];
+}
+
+export interface ChunkAssignment {
+  chunkIndex: number;
+  startRow: number;
+  endRow: number;
+  config: ChunkConfig;
+}
+
+export interface ChunkResult {
+  chunkIndex: number;
+  rows: string[][];
+}
