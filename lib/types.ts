@@ -10,6 +10,7 @@ export interface GeneratorConfig {
   columns: string[];
   rowCount: number;
   format: ExportFormat;
+  seed: number;
   preview?: boolean;
 }
 
@@ -24,6 +25,7 @@ export interface ChunkConfig {
   startRow: number;
   endRow: number;
   format: ExportFormat;
+  seed: number;
   workerId: number;
   includeHeader: boolean;
 }

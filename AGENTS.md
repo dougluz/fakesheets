@@ -82,8 +82,29 @@ lib/
 ├── formats.ts              # CSV and XLSX builder for preview worker
 ├── streamingBuilder.ts     # Streaming CSV/XLSX builder for WorkerPool
 ├── workerPool.ts           # Multi-worker orchestration
-└── types.ts                # Shared types
+├── types.ts                # Shared types
+└── urlState.ts             # URL state management (seed, columns, rows, format)
+
+hooks/
+└── useUrlState.ts          # React hook for URL state with SSR-safe hydration
 ```
+
+### URL State Management
+
+The app persists all generation settings in the URL, enabling shareable links:
+
+- **URL Parameters:**
+  - `seed` — Random seed for reproducible data generation
+  - `cols` — Comma-separated list of selected columns
+  - `rows` — Number of rows (1-1,000,000)
+  - `format` — Export format (`csv` or `xlsx`)
+
+- **SSR-Safe Hydration:** The `useUrlState` hook avoids hydration mismatches by:
+  1. Rendering with static defaults on both server and client
+  2. Parsing URL params in a `useEffect` after hydration
+  3. Updating the URL via `replaceState` when state changes
+
+- **Shareable Links:** Users can copy the current URL to share their configuration. The "Copy Link" button uses the Clipboard API.
 
 ## Core Behaviors
 

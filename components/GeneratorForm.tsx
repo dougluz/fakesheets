@@ -1,6 +1,6 @@
-import { useState } from "react";
 import { AVAILABLE_COLUMNS } from "../lib/columns";
-import { ExportFormat, GeneratorConfig } from "../lib/types";
+import { GeneratorConfig } from "../lib/types";
+import { useUrlState } from "../hooks/useUrlState";
 
 interface GeneratorFormProps {
   onGenerate: (config: GeneratorConfig) => void;
@@ -9,30 +9,34 @@ interface GeneratorFormProps {
 }
 
 export default function GeneratorForm({ onGenerate, onPreview, disabled }: GeneratorFormProps) {
-  const [selectedColumns, setSelectedColumns] = useState<Set<string>>(
-    new Set(["firstName", "lastName", "email"])
-  );
-  const [rowCount, setRowCount] = useState(1000);
-  const [format, setFormat] = useState<ExportFormat>("csv");
+  const {
+    state,
+    setColumns,
+    setRowCount,
+    setFormat,
+    regenerateSeed,
+    copyShareableUrl,
+    copied,
+  } = useUrlState();
+
+  const selectedColumns = new Set(state.columns);
 
   function toggleColumn(key: string) {
-    setSelectedColumns((prev) => {
-      const next = new Set(prev);
-      if (next.has(key)) {
-        next.delete(key);
-      } else {
-        next.add(key);
-      }
-      return next;
-    });
+    const next = new Set(selectedColumns);
+    if (next.has(key)) {
+      next.delete(key);
+    } else {
+      next.add(key);
+    }
+    setColumns(Array.from(next));
   }
 
   function selectAll() {
-    setSelectedColumns(new Set(AVAILABLE_COLUMNS.map((c) => c.key)));
+    setColumns(AVAILABLE_COLUMNS.map((c) => c.key));
   }
 
   function selectNone() {
-    setSelectedColumns(new Set());
+    setColumns([]);
   }
 
   function handleSubmit(e: React.FormEvent) {
@@ -41,7 +45,20 @@ export default function GeneratorForm({ onGenerate, onPreview, disabled }: Gener
     const columns = AVAILABLE_COLUMNS.filter((c) => selectedColumns.has(c.key)).map(
       (c) => c.key
     );
-    onGenerate({ columns, rowCount, format });
+    onGenerate({ columns, rowCount: state.rowCount, format: state.format, seed: state.seed });
+  }
+
+  function getConfig(preview: boolean = false): GeneratorConfig {
+    const columns = AVAILABLE_COLUMNS.filter((c) => selectedColumns.has(c.key)).map(
+      (c) => c.key
+    );
+    return {
+      columns,
+      rowCount: state.rowCount,
+      format: state.format,
+      seed: state.seed,
+      preview,
+    };
   }
 
   return (
@@ -114,7 +131,7 @@ export default function GeneratorForm({ onGenerate, onPreview, disabled }: Gener
               type="number"
               min={1}
               max={1000000}
-              value={rowCount}
+              value={state.rowCount}
               onChange={(e) => {
                 const v = parseInt(e.target.value, 10);
                 if (!isNaN(v)) setRowCount(Math.max(1, Math.min(1000000, v)));
@@ -134,7 +151,7 @@ export default function GeneratorForm({ onGenerate, onPreview, disabled }: Gener
                   type="button"
                   onClick={() => setFormat(f)}
                   className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
-                    format === f
+                    state.format === f
                       ? "text-white bg-primary shadow-sm"
                       : "text-slate-400 bg-transparent hover:text-white"
                   }`}
@@ -146,16 +163,29 @@ export default function GeneratorForm({ onGenerate, onPreview, disabled }: Gener
           </div>
         </div>
 
-        <div className="flex gap-4 w-full md:w-auto">
+        <div className="flex gap-3 w-full md:w-auto flex-wrap">
+          <button
+            type="button"
+            disabled={disabled}
+            onClick={copyShareableUrl}
+            className="flex-1 md:flex-none px-4 py-3 rounded-xl text-slate-300 border border-slate-600 hover:bg-slate-800 hover:border-slate-500 transition-colors font-medium flex items-center justify-center disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer text-sm"
+          >
+            <span className="material-icons text-base mr-2">{copied ? "check" : "link"}</span>
+            {copied ? "Copied!" : "Copy Link"}
+          </button>
+          <button
+            type="button"
+            disabled={disabled}
+            onClick={regenerateSeed}
+            className="flex-1 md:flex-none px-4 py-3 rounded-xl text-slate-300 border border-slate-600 hover:bg-slate-800 hover:border-slate-500 transition-colors font-medium flex items-center justify-center disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer text-sm"
+          >
+            <span className="material-icons text-base mr-2">refresh</span>
+            Regenerate
+          </button>
           <button
             type="button"
             disabled={disabled || selectedColumns.size === 0}
-            onClick={() => {
-              const columns = AVAILABLE_COLUMNS.filter((c) => selectedColumns.has(c.key)).map(
-                (c) => c.key
-              );
-              onPreview({ columns, rowCount, format, preview: true });
-            }}
+            onClick={() => onPreview(getConfig(true))}
             className="flex-1 md:flex-none px-6 py-3 rounded-xl text-primary border border-primary/30 hover:bg-primary/10 transition-colors font-medium flex items-center justify-center disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer"
           >
             <span className="material-icons text-base mr-2">visibility</span>
@@ -172,7 +202,7 @@ export default function GeneratorForm({ onGenerate, onPreview, disabled }: Gener
         </div>
       </div>
 
-      {format === "xlsx" && rowCount > 500000 && (
+      {state.format === "xlsx" && state.rowCount > 500000 && (
         <div className="mt-4 p-4 rounded-xl bg-amber-900/30 border border-amber-500/50 flex items-start gap-3">
           <span className="material-icons text-amber-400 text-xl flex-shrink-0">warning</span>
           <p className="text-sm text-amber-200">
