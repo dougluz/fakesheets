@@ -1,10 +1,10 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import GeneratorForm from "../components/GeneratorForm";
 import PreviewTable from "../components/PreviewTable";
 import ProgressBar from "../components/ProgressBar";
-import { GeneratorConfig, WorkerMessage } from "../lib/types";
+import { CANCELLED_ERROR, GeneratorConfig, WorkerMessage } from "../lib/types";
 import { WorkerPool } from "../lib/workerPool";
 import { Analytics } from "@vercel/analytics/next"
 
@@ -14,11 +14,19 @@ export default function Home() {
   const [state, setState] = useState<AppState>("idle");
   const [progress, setProgress] = useState({ current: 0, total: 0 });
   const [error, setError] = useState<string | null>(null);
+  const [showCancelled, setShowCancelled] = useState(false);
   const [previewData, setPreviewData] = useState<{
     headers: string[];
     rows: string[][];
   } | null>(null);
   const poolRef = useRef<WorkerPool | null>(null);
+
+  useEffect(() => {
+    if (showCancelled) {
+      const timer = setTimeout(() => setShowCancelled(false), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [showCancelled]);
 
   const handleGenerate = useCallback(async (config: GeneratorConfig) => {
     setState("generating");
@@ -46,12 +54,21 @@ export default function Home() {
       
       setState("complete");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Generation failed");
-      setState("idle");
+      if (err instanceof Error && err.message === CANCELLED_ERROR) {
+        setShowCancelled(true);
+        setState("idle");
+      } else {
+        setError(err instanceof Error ? err.message : "Generation failed");
+        setState("idle");
+      }
     } finally {
       pool.terminate();
       poolRef.current = null;
     }
+  }, []);
+
+  const handleCancel = useCallback(() => {
+    poolRef.current?.abort();
   }, []);
 
   const handlePreview = useCallback((config: GeneratorConfig) => {
@@ -109,7 +126,14 @@ export default function Home() {
           current={progress.current}
           total={progress.total}
           visible={state === "generating"}
+          onCancel={handleCancel}
         />
+
+        {showCancelled && (
+          <div className="rounded-lg border border-amber-800 bg-amber-950 px-4 py-3 text-sm text-amber-400">
+            Generation cancelled
+          </div>
+        )}
 
         {error && (
           <div className="rounded-lg border border-red-800 bg-red-950 px-4 py-3 text-sm text-red-400">
