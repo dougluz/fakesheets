@@ -11,7 +11,7 @@ import {
   DEFAULT_ROW_COUNT,
   DEFAULT_FORMAT,
 } from "../lib/urlState";
-import { ExportFormat } from "../lib/types";
+import { ExportFormat, FakerLocale } from "../lib/types";
 
 function getInitialState(): UrlState {
   return {
@@ -19,6 +19,7 @@ function getInitialState(): UrlState {
     columns: DEFAULT_COLUMNS,
     rowCount: DEFAULT_ROW_COUNT,
     format: DEFAULT_FORMAT,
+    locale: "en",
   };
 }
 
@@ -51,6 +52,10 @@ export function useUrlState() {
     setState((prev) => ({ ...prev, format }));
   }, []);
 
+  const setLocale = useCallback((locale: FakerLocale) => {
+    setState((prev) => ({ ...prev, locale }));
+  }, []);
+
   const regenerateSeed = useCallback(() => {
     setState((prev) => ({ ...prev, seed: generateSeed() }));
   }, []);
@@ -72,6 +77,7 @@ export function useUrlState() {
     setColumns,
     setRowCount,
     setFormat,
+    setLocale,
     regenerateSeed,
     copyShareableUrl,
     copied,

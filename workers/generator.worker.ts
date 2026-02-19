@@ -1,37 +1,42 @@
-import { faker } from "@faker-js/faker";
+import { faker, fakerPT_BR } from "@faker-js/faker";
 import { GeneratorConfig } from "../lib/types";
 import { buildCSV, buildXLSX } from "../lib/formats";
 import { AVAILABLE_COLUMNS } from "../lib/columns";
 
 const CHUNK_SIZE = 5000;
 
-const columnGenerators: Record<string, () => string> = {
-  firstName: () => faker.person.firstName(),
-  lastName: () => faker.person.lastName(),
-  fullName: () => faker.person.fullName(),
-  email: () => faker.internet.email(),
-  phone: () => faker.phone.number(),
-  company: () => faker.company.name(),
-  jobTitle: () => faker.person.jobTitle(),
-  address: () => faker.location.streetAddress(),
-  city: () => faker.location.city(),
-  country: () => faker.location.country(),
-  website: () => faker.internet.url(),
-  avatarUrl: () => faker.image.avatar(),
+function getFaker(locale: string) {
+  return locale === "pt_BR" ? fakerPT_BR : faker;
+}
+
+const columnGenerators: Record<string, (locale: string) => () => string> = {
+  firstName: (locale) => () => getFaker(locale).person.firstName(),
+  lastName: (locale) => () => getFaker(locale).person.lastName(),
+  fullName: (locale) => () => getFaker(locale).person.fullName(),
+  email: (locale) => () => getFaker(locale).internet.email(),
+  phone: (locale) => () => getFaker(locale).phone.number(),
+  company: (locale) => () => getFaker(locale).company.name(),
+  jobTitle: (locale) => () => getFaker(locale).person.jobTitle(),
+  address: (locale) => () => getFaker(locale).location.streetAddress(),
+  city: (locale) => () => getFaker(locale).location.city(),
+  country: (locale) => () => getFaker(locale).location.country(),
+  website: (locale) => () => getFaker(locale).internet.url(),
+  avatarUrl: (locale) => () => getFaker(locale).image.avatar(),
 };
 
 self.onmessage = async (e: MessageEvent<GeneratorConfig>) => {
   try {
     const config = e.data;
-    const { columns, rowCount, format, seed } = config;
+    const { columns, rowCount, format, seed, locale } = config;
 
-    faker.seed(seed);
+    const activeFaker = getFaker(locale);
+    activeFaker.seed(seed);
 
     const headers = columns.map(
       (key) => AVAILABLE_COLUMNS.find((c) => c.key === key)?.label ?? key
     );
     const generators = columns.map(
-      (key) => columnGenerators[key] ?? (() => "")
+      (key) => columnGenerators[key]?.(locale) ?? (() => "")
     );
 
     if (config.preview) {

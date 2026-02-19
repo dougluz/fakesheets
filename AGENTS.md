@@ -24,7 +24,7 @@ Fakesheets is a browser-based tool that generates fake spreadsheets (CSV/XLSX) u
 ┌─────────────────────────────────────────────────────────────┐
 │                    Main Thread (UI)                          │
 │                                                              │
-│  GeneratorForm: columns, rows (1-1M), format selector       │
+│  GeneratorForm: columns, rows (1-1M), format, locale        │
 │  PreviewTable: shows first 5 rows                           │
 │  ProgressBar: visual feedback during generation             │
 │  Performance Warning: XLSX > 500k rows                      │
@@ -98,6 +98,9 @@ The app persists all generation settings in the URL, enabling shareable links:
   - `cols` — Comma-separated list of selected columns
   - `rows` — Number of rows (1-1,000,000)
   - `format` — Export format (`csv` or `xlsx`)
+  - `locale` — Faker locale for data language (`en` or `pt_BR`)
+
+- **Auto-Detect Locale:** When no locale is specified in the URL, the app auto-detects from the user's browser language. Portuguese browsers default to `pt_BR`, others default to `en`.
 
 - **SSR-Safe Hydration:** The `useUrlState` hook avoids hydration mismatches by:
   1. Rendering with static defaults on both server and client
@@ -167,7 +170,7 @@ Each column maps to a Faker method:
 ### UI Requirements
 
 - Single page, no routing needed
-- Form section: column picker, row count input (default 1,000, max 1,000,000), format toggle (CSV/XLSX)
+- Form section: column picker, row count input (default 1,000, max 1,000,000), format toggle (CSV/XLSX), language selector (English/Português)
 - Preview button → shows first 5 rows in a table
 - Generate button → disables during generation, shows progress bar
 - Progress bar: percentage + row count (e.g., "45,000 / 100,000 rows")
@@ -194,7 +197,7 @@ Each column maps to a Faker method:
 
 ## Future Enhancements (Out of Scope for v1)
 
-- Custom Faker locale selection (pt_BR, es, etc.)
+- Additional Faker locales (es, de, fr, etc.)
 - Custom column definitions (user types a Faker method path)
 - Drag-and-drop column reordering
 - Save/load column presets

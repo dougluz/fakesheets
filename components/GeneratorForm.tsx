@@ -1,6 +1,11 @@
 import { AVAILABLE_COLUMNS } from "../lib/columns";
-import { GeneratorConfig } from "../lib/types";
+import { GeneratorConfig, FakerLocale } from "../lib/types";
 import { useUrlState } from "../hooks/useUrlState";
+
+const LOCALE_OPTIONS: { value: FakerLocale; label: string }[] = [
+  { value: "en", label: "English" },
+  { value: "pt_BR", label: "Português (BR)" },
+];
 
 interface GeneratorFormProps {
   onGenerate: (config: GeneratorConfig) => void;
@@ -14,6 +19,7 @@ export default function GeneratorForm({ onGenerate, onPreview, disabled }: Gener
     setColumns,
     setRowCount,
     setFormat,
+    setLocale,
     regenerateSeed,
     copyShareableUrl,
     copied,
@@ -45,7 +51,7 @@ export default function GeneratorForm({ onGenerate, onPreview, disabled }: Gener
     const columns = AVAILABLE_COLUMNS.filter((c) => selectedColumns.has(c.key)).map(
       (c) => c.key
     );
-    onGenerate({ columns, rowCount: state.rowCount, format: state.format, seed: state.seed });
+    onGenerate({ columns, rowCount: state.rowCount, format: state.format, seed: state.seed, locale: state.locale });
   }
 
   function getConfig(preview: boolean = false): GeneratorConfig {
@@ -57,6 +63,7 @@ export default function GeneratorForm({ onGenerate, onPreview, disabled }: Gener
       rowCount: state.rowCount,
       format: state.format,
       seed: state.seed,
+      locale: state.locale,
       preview,
     };
   }
@@ -117,8 +124,8 @@ export default function GeneratorForm({ onGenerate, onPreview, disabled }: Gener
 
       <hr className="border-border-dark" />
 
-      <div className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
-        <div className="flex flex-col gap-6 sm:flex-row w-full md:w-auto">
+      <div className="flex flex-col gap-6">
+        <div className="flex flex-col gap-6 sm:flex-row">
           <div className="w-full sm:w-48">
             <label
               htmlFor="rowCount"
@@ -161,14 +168,36 @@ export default function GeneratorForm({ onGenerate, onPreview, disabled }: Gener
               ))}
             </div>
           </div>
+
+          <div className="w-full sm:w-auto">
+            <label className="mb-2 block text-sm font-medium text-slate-300">
+              Language
+            </label>
+            <div className="inline-flex rounded-xl shadow-sm bg-slate-800 p-1" role="group">
+              {LOCALE_OPTIONS.map((opt) => (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => setLocale(opt.value)}
+                  className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+                    state.locale === opt.value
+                      ? "text-white bg-primary shadow-sm"
+                      : "text-slate-400 bg-transparent hover:text-white"
+                  }`}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
 
-        <div className="flex gap-3 w-full md:w-auto flex-wrap">
+        <div className="flex gap-3 flex-wrap justify-end">
           <button
             type="button"
             disabled={disabled}
             onClick={copyShareableUrl}
-            className="flex-1 md:flex-none px-4 py-3 rounded-xl text-slate-300 border border-slate-600 hover:bg-slate-800 hover:border-slate-500 transition-colors font-medium flex items-center justify-center disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer text-sm"
+            className="flex-1 sm:flex-none px-4 py-3 rounded-xl text-slate-300 border border-slate-600 hover:bg-slate-800 hover:border-slate-500 transition-colors font-medium flex items-center justify-center disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer text-sm"
           >
             <span className="material-icons text-base mr-2">{copied ? "check" : "link"}</span>
             {copied ? "Copied!" : "Copy Link"}
@@ -177,7 +206,7 @@ export default function GeneratorForm({ onGenerate, onPreview, disabled }: Gener
             type="button"
             disabled={disabled}
             onClick={regenerateSeed}
-            className="flex-1 md:flex-none px-4 py-3 rounded-xl text-slate-300 border border-slate-600 hover:bg-slate-800 hover:border-slate-500 transition-colors font-medium flex items-center justify-center disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer text-sm"
+            className="flex-1 sm:flex-none px-4 py-3 rounded-xl text-slate-300 border border-slate-600 hover:bg-slate-800 hover:border-slate-500 transition-colors font-medium flex items-center justify-center disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer text-sm"
           >
             <span className="material-icons text-base mr-2">refresh</span>
             Regenerate
@@ -186,7 +215,7 @@ export default function GeneratorForm({ onGenerate, onPreview, disabled }: Gener
             type="button"
             disabled={disabled || selectedColumns.size === 0}
             onClick={() => onPreview(getConfig(true))}
-            className="flex-1 md:flex-none px-6 py-3 rounded-xl text-primary border border-primary/30 hover:bg-primary/10 transition-colors font-medium flex items-center justify-center disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer"
+            className="flex-1 sm:flex-none px-6 py-3 rounded-xl text-primary border border-primary/30 hover:bg-primary/10 transition-colors font-medium flex items-center justify-center disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer"
           >
             <span className="material-icons text-base mr-2">visibility</span>
             Preview
@@ -194,7 +223,7 @@ export default function GeneratorForm({ onGenerate, onPreview, disabled }: Gener
           <button
             type="submit"
             disabled={disabled || selectedColumns.size === 0}
-            className="flex-1 md:flex-none px-6 py-3 rounded-xl bg-primary hover:bg-primary-dark text-white shadow-glow transition-all duration-200 font-medium flex items-center justify-center transform active:scale-95 disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer"
+            className="flex-1 sm:flex-none px-6 py-3 rounded-xl bg-primary hover:bg-primary-dark text-white shadow-glow transition-all duration-200 font-medium flex items-center justify-center transform active:scale-95 disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer"
           >
             <span className="material-icons text-base mr-2">download</span>
             {disabled ? "Generating..." : "Generate"}

@@ -1,4 +1,5 @@
 export type ExportFormat = "csv" | "xlsx";
+export type FakerLocale = "en" | "pt_BR";
 
 export interface ColumnDefinition {
   key: string;
@@ -11,6 +12,7 @@ export interface GeneratorConfig {
   rowCount: number;
   format: ExportFormat;
   seed: number;
+  locale: FakerLocale;
   preview?: boolean;
 }
 
@@ -26,6 +28,7 @@ export interface ChunkConfig {
   endRow: number;
   format: ExportFormat;
   seed: number;
+  locale: FakerLocale;
   workerId: number;
   includeHeader: boolean;
 }

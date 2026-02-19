@@ -37,7 +37,7 @@ export class WorkerPool {
   }
 
   async generate(config: GeneratorConfig): Promise<{ blob: Blob; filename: string }> {
-    const { columns, rowCount, format, seed } = config;
+    const { columns, rowCount, format, seed, locale } = config;
 
     this.headers = columns.map(
       (key) => AVAILABLE_COLUMNS.find((c) => c.key === key)?.label ?? key
@@ -118,6 +118,7 @@ export class WorkerPool {
           endRow,
           format,
           seed,
+          locale,
           workerId,
           includeHeader: workerId === 0,
         };
