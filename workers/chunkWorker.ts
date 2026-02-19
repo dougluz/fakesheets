@@ -1,22 +1,26 @@
-import { faker } from "@faker-js/faker";
+import { faker, fakerPT_BR } from "@faker-js/faker";
 import { ChunkConfig, ChunkWorkerMessage } from "../lib/types";
 import { AVAILABLE_COLUMNS } from "../lib/columns";
 
 const PROGRESS_INTERVAL = 5000;
 
-const columnGenerators: Record<string, () => string> = {
-  firstName: () => faker.person.firstName(),
-  lastName: () => faker.person.lastName(),
-  fullName: () => faker.person.fullName(),
-  email: () => faker.internet.email(),
-  phone: () => faker.phone.number(),
-  company: () => faker.company.name(),
-  jobTitle: () => faker.person.jobTitle(),
-  address: () => faker.location.streetAddress(),
-  city: () => faker.location.city(),
-  country: () => faker.location.country(),
-  website: () => faker.internet.url(),
-  avatarUrl: () => faker.image.avatar(),
+function getFaker(locale: string) {
+  return locale === "pt_BR" ? fakerPT_BR : faker;
+}
+
+const columnGenerators: Record<string, (locale: string) => () => string> = {
+  firstName: (locale) => () => getFaker(locale).person.firstName(),
+  lastName: (locale) => () => getFaker(locale).person.lastName(),
+  fullName: (locale) => () => getFaker(locale).person.fullName(),
+  email: (locale) => () => getFaker(locale).internet.email(),
+  phone: (locale) => () => getFaker(locale).phone.number(),
+  company: (locale) => () => getFaker(locale).company.name(),
+  jobTitle: (locale) => () => getFaker(locale).person.jobTitle(),
+  address: (locale) => () => getFaker(locale).location.streetAddress(),
+  city: (locale) => () => getFaker(locale).location.city(),
+  country: (locale) => () => getFaker(locale).location.country(),
+  website: (locale) => () => getFaker(locale).internet.url(),
+  avatarUrl: (locale) => () => getFaker(locale).image.avatar(),
 };
 
 function escapeCSVField(field: string): string {
@@ -38,15 +42,16 @@ function buildCSVChunk(headers: string[], rows: string[][]): string {
 self.onmessage = (e: MessageEvent<ChunkConfig>) => {
   try {
     const config = e.data;
-    const { columns, startRow, endRow, format, seed, workerId, includeHeader } = config;
+    const { columns, startRow, endRow, format, seed, locale, workerId, includeHeader } = config;
 
-    faker.seed(seed + workerId);
+    const activeFaker = getFaker(locale);
+    activeFaker.seed(seed + workerId);
 
     const headers = columns.map(
       (key) => AVAILABLE_COLUMNS.find((c) => c.key === key)?.label ?? key
     );
     const generators = columns.map(
-      (key) => columnGenerators[key] ?? (() => "")
+      (key) => columnGenerators[key]?.(locale) ?? (() => "")
     );
 
     const totalRows = endRow - startRow;
