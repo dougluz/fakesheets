@@ -1,6 +1,7 @@
 import {
   ChunkConfig,
   ChunkWorkerMessage,
+  CANCELLED_ERROR,
   ExportFormat,
   GeneratorConfig,
   ProgressCallback,
@@ -17,6 +18,9 @@ export class WorkerPool {
   private workers: Worker[] = [];
   private progressCallback: ProgressCallback | null = null;
   private headers: string[] = [];
+  private resolve: ((value: { blob: Blob; filename: string }) => void) | null = null;
+  private reject: ((reason: Error) => void) | null = null;
+  private cancelled = false;
 
   constructor(options?: WorkerPoolOptions) {
     const hardwareConcurrency =
@@ -55,7 +59,11 @@ export class WorkerPool {
       progress.set(i, { current: 0, total: rowsPerWorker });
     }
 
+    this.cancelled = false;
+
     return new Promise((resolve, reject) => {
+      this.resolve = resolve;
+      this.reject = reject;
       let completed = 0;
       let hasError = false;
 
@@ -67,7 +75,7 @@ export class WorkerPool {
         this.workers.push(worker);
 
         worker.onmessage = (e: MessageEvent<ChunkWorkerMessage>) => {
-          if (hasError) return;
+          if (hasError || this.cancelled) return;
 
           const msg = e.data;
 
@@ -97,7 +105,7 @@ export class WorkerPool {
         };
 
         worker.onerror = (e) => {
-          if (!hasError) {
+          if (!hasError && !this.cancelled) {
             hasError = true;
             this.terminate();
             reject(new Error(e.message || "Worker error"));
@@ -175,5 +183,15 @@ export class WorkerPool {
       worker.terminate();
     }
     this.workers = [];
+  }
+
+  abort(): void {
+    this.cancelled = true;
+    this.terminate();
+    if (this.reject) {
+      this.reject(new Error(CANCELLED_ERROR));
+      this.resolve = null;
+      this.reject = null;
+    }
   }
 }

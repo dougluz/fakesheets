@@ -47,3 +47,5 @@ export interface WorkerPoolOptions {
 }
 
 export type ProgressCallback = (progress: PoolProgress) => void;
+
+export const CANCELLED_ERROR = "Generation cancelled";
