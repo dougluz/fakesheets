@@ -1,4 +1,4 @@
-import * as XLSX from "xlsx";
+import ExcelJS from "exceljs";
 
 function escapeCSVField(field: string): string {
   if (field.includes(",") || field.includes('"') || field.includes("\n")) {
@@ -17,13 +17,19 @@ export function buildCSV(headers: string[], rows: string[][]): Blob {
   return new Blob([csv], { type: "text/csv;charset=utf-8" });
 }
 
-export function buildXLSX(headers: string[], rows: string[][]): Blob {
-  const data = [headers, ...rows];
-  const ws = XLSX.utils.aoa_to_sheet(data);
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, "Data");
-  const buf = XLSX.write(wb, { type: "array", bookType: "xlsx" });
-  return new Blob([buf], {
+export async function buildXLSX(headers: string[], rows: string[][]): Promise<Blob> {
+  const workbook = new ExcelJS.Workbook();
+  const worksheet = workbook.addWorksheet("Data");
+  
+  const headerRow = worksheet.addRow(headers);
+  headerRow.font = { bold: true };
+  
+  for (const row of rows) {
+    worksheet.addRow(row);
+  }
+  
+  const buffer = (await workbook.xlsx.writeBuffer()) as ArrayBuffer;
+  return new Blob([buffer], {
     type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
   });
 }

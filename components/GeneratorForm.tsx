@@ -113,11 +113,11 @@ export default function GeneratorForm({ onGenerate, onPreview, disabled }: Gener
               id="rowCount"
               type="number"
               min={1}
-              max={500000}
+              max={1000000}
               value={rowCount}
               onChange={(e) => {
                 const v = parseInt(e.target.value, 10);
-                if (!isNaN(v)) setRowCount(Math.max(1, Math.min(500000, v)));
+                if (!isNaN(v)) setRowCount(Math.max(1, Math.min(1000000, v)));
               }}
               className="block w-full rounded-xl border-border-dark bg-slate-900 text-white focus:border-primary focus:ring-primary sm:text-sm py-3 px-4 shadow-sm"
             />
@@ -171,6 +171,15 @@ export default function GeneratorForm({ onGenerate, onPreview, disabled }: Gener
           </button>
         </div>
       </div>
+
+      {format === "xlsx" && rowCount > 500000 && (
+        <div className="mt-4 p-4 rounded-xl bg-amber-900/30 border border-amber-500/50 flex items-start gap-3">
+          <span className="material-icons text-amber-400 text-xl flex-shrink-0">warning</span>
+          <p className="text-sm text-amber-200">
+            <strong>Performance Warning:</strong> XLSX files with more than 500,000 rows may take significantly longer to generate and could cause memory issues in your browser. Consider using CSV format for large datasets, or reduce the row count.
+          </p>
+        </div>
+      )}
     </form>
   );
 }
