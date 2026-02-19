@@ -23,7 +23,9 @@ const columnGenerators: Record<string, () => string> = {
 self.onmessage = async (e: MessageEvent<GeneratorConfig>) => {
   try {
     const config = e.data;
-    const { columns, rowCount, format } = config;
+    const { columns, rowCount, format, seed } = config;
+
+    faker.seed(seed);
 
     const headers = columns.map(
       (key) => AVAILABLE_COLUMNS.find((c) => c.key === key)?.label ?? key

@@ -38,7 +38,9 @@ function buildCSVChunk(headers: string[], rows: string[][]): string {
 self.onmessage = (e: MessageEvent<ChunkConfig>) => {
   try {
     const config = e.data;
-    const { columns, startRow, endRow, format, workerId, includeHeader } = config;
+    const { columns, startRow, endRow, format, seed, workerId, includeHeader } = config;
+
+    faker.seed(seed + workerId);
 
     const headers = columns.map(
       (key) => AVAILABLE_COLUMNS.find((c) => c.key === key)?.label ?? key
