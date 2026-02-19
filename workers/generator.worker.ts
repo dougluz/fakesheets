@@ -20,7 +20,7 @@ const columnGenerators: Record<string, () => string> = {
   avatarUrl: () => faker.image.avatar(),
 };
 
-self.onmessage = (e: MessageEvent<GeneratorConfig>) => {
+self.onmessage = async (e: MessageEvent<GeneratorConfig>) => {
   try {
     const config = e.data;
     const { columns, rowCount, format } = config;
@@ -65,7 +65,7 @@ self.onmessage = (e: MessageEvent<GeneratorConfig>) => {
     const ext = format === "csv" ? "csv" : "xlsx";
     const filename = `fakesheets-${timestamp}.${ext}`;
 
-    const blob = format === "csv" ? buildCSV(headers, rows) : buildXLSX(headers, rows);
+    const blob = format === "csv" ? buildCSV(headers, rows) : await buildXLSX(headers, rows);
 
     self.postMessage({ type: "complete", blob, filename });
   } catch (err) {

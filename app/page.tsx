@@ -5,6 +5,7 @@ import GeneratorForm from "../components/GeneratorForm";
 import PreviewTable from "../components/PreviewTable";
 import ProgressBar from "../components/ProgressBar";
 import { GeneratorConfig, WorkerMessage } from "../lib/types";
+import { WorkerPool } from "../lib/workerPool";
 import { Analytics } from "@vercel/analytics/next"
 
 type AppState = "idle" | "generating" | "complete";
@@ -17,55 +18,40 @@ export default function Home() {
     headers: string[];
     rows: string[][];
   } | null>(null);
-  const workerRef = useRef<Worker | null>(null);
+  const poolRef = useRef<WorkerPool | null>(null);
 
-  const handleGenerate = useCallback((config: GeneratorConfig) => {
+  const handleGenerate = useCallback(async (config: GeneratorConfig) => {
     setState("generating");
     setProgress({ current: 0, total: config.rowCount });
     setError(null);
 
-    const worker = new Worker(
-      new URL("../workers/generator.worker.ts", import.meta.url)
-    );
-    workerRef.current = worker;
+    const pool = new WorkerPool();
+    poolRef.current = pool;
 
-    worker.onmessage = (e: MessageEvent<WorkerMessage>) => {
-      const msg = e.data;
-      switch (msg.type) {
-        case "progress":
-          setProgress({ current: msg.current, total: msg.total });
-          break;
-        case "complete": {
-          const url = URL.createObjectURL(msg.blob);
-          const a = document.createElement("a");
-          a.href = url;
-          a.download = msg.filename;
-          document.body.appendChild(a);
-          a.click();
-          document.body.removeChild(a);
-          URL.revokeObjectURL(url);
-          setState("complete");
-          worker.terminate();
-          workerRef.current = null;
-          break;
-        }
-        case "error":
-          setError(msg.message);
-          setState("idle");
-          worker.terminate();
-          workerRef.current = null;
-          break;
-      }
-    };
+    pool.onProgress((p) => {
+      setProgress({ current: p.current, total: p.total });
+    });
 
-    worker.onerror = (err) => {
-      setError(err.message || "Worker error occurred");
+    try {
+      const { blob, filename } = await pool.generate(config);
+      
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      
+      setState("complete");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Generation failed");
       setState("idle");
-      worker.terminate();
-      workerRef.current = null;
-    };
-
-    worker.postMessage(config);
+    } finally {
+      pool.terminate();
+      poolRef.current = null;
+    }
   }, []);
 
   const handlePreview = useCallback((config: GeneratorConfig) => {
