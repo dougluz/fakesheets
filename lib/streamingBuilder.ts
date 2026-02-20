@@ -22,6 +22,18 @@ export function buildStreamingCSV(
   return new Blob(parts, { type: "text/csv;charset=utf-8" });
 }
 
+export function buildStreamingJSON(headers: string[], dataChunks: string[][][]): Blob {
+  const allRows: Record<string, string>[] = [];
+  for (const chunk of dataChunks) {
+    for (const row of chunk) {
+      const obj: Record<string, string> = {};
+      headers.forEach((h, i) => { obj[h] = row[i] ?? ""; });
+      allRows.push(obj);
+    }
+  }
+  return new Blob([JSON.stringify(allRows)], { type: "application/json" });
+}
+
 export async function buildStreamingXLSX(
   headers: string[],
   dataChunks: string[][][]

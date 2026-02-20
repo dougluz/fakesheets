@@ -17,6 +17,15 @@ export function buildCSV(headers: string[], rows: string[][]): Blob {
   return new Blob([csv], { type: "text/csv;charset=utf-8" });
 }
 
+export function buildJSON(headers: string[], rows: string[][]): Blob {
+  const data = rows.map((row) => {
+    const obj: Record<string, string> = {};
+    headers.forEach((h, i) => { obj[h] = row[i] ?? ""; });
+    return obj;
+  });
+  return new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+}
+
 export async function buildXLSX(headers: string[], rows: string[][]): Promise<Blob> {
   const workbook = new ExcelJS.Workbook();
   const worksheet = workbook.addWorksheet("Data");

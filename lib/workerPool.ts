@@ -8,7 +8,7 @@ import {
   WorkerPoolOptions,
 } from "./types";
 import { AVAILABLE_COLUMNS } from "./columns";
-import { buildStreamingCSV, buildStreamingXLSX, escapeCSVField } from "./streamingBuilder";
+import { buildStreamingCSV, buildStreamingJSON, buildStreamingXLSX, escapeCSVField } from "./streamingBuilder";
 
 const MAX_WORKERS = 8;
 const MIN_ROWS_PER_WORKER = 10000;
@@ -120,7 +120,6 @@ export class WorkerPool {
           seed,
           locale,
           workerId,
-          includeHeader: workerId === 0,
         };
 
         worker.postMessage(chunkConfig);
@@ -167,14 +166,16 @@ export class WorkerPool {
       const headerLine = this.headers.map(escapeCSVField).join(",");
       const csvChunks = chunks.map((c) => c.data as string);
       blob = buildStreamingCSV(csvChunks, headerLine);
+    } else if (format === "json") {
+      const jsonChunks = chunks.map((c) => c.data as string[][]);
+      blob = buildStreamingJSON(this.headers, jsonChunks);
     } else {
       const xlsxChunks = chunks.map((c) => c.data as string[][]);
       blob = await buildStreamingXLSX(this.headers, xlsxChunks);
     }
 
     const timestamp = Date.now();
-    const ext = format === "csv" ? "csv" : "xlsx";
-    const filename = `fakesheets-${timestamp}.${ext}`;
+    const filename = `fakesheets-${timestamp}.${format}`;
 
     return { blob, filename };
   }

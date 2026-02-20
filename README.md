@@ -9,7 +9,7 @@ A browser-based tool that generates fake spreadsheets (CSV/XLSX) with up to 1,00
 ## Features
 
 - Generate up to **1,000,000 rows** of realistic fake data
-- Export to **CSV** or **XLSX** format
+- Export to **CSV**, **XLSX**, or **JSON** format
 - **12 column types** powered by [Faker.js](https://fakerjs.dev/)
 - **Parallel generation** via multiple Web Workers
 - **Reproducible data** with seed-based generation
@@ -102,7 +102,7 @@ page.tsx                workerPool.ts              chunkWorker.ts (#0..N)
     │                        │◄── chunk-complete (data) ────│
     │                        │                              │
     │                        │── assemble chunks in order
-    │                        │── build CSV / XLSX blob
+    │                        │── build CSV / XLSX / JSON blob
     │                        │                              │
     │◄── { blob, filename } ─│
     │── trigger download ────►
@@ -180,9 +180,18 @@ XLSX:
 │      ├─ Rows from chunk[1]                │
 │      └─ Rows from chunk[2]...             │
 └───────────────────────────────────────────┘
+
+JSON:
+┌───────────────────────────────────────────┐
+│  [                                        │
+│    {"firstName":"…","email":"…"},         │
+│    {"firstName":"…","email":"…"},         │
+│    ...one object per row                  │
+│  ]                                        │
+└───────────────────────────────────────────┘
 ```
 
-Workers generating CSV each produce pre-escaped text. Only worker 0 includes the header row. For XLSX, workers return raw `string[][]` arrays which ExcelJS writes into a single workbook.
+Workers generating CSV each produce pre-escaped text. Only worker 0 includes the header row. For XLSX and JSON, workers return raw `string[][]` arrays — ExcelJS assembles XLSX into a workbook, and `buildStreamingJSON` maps the arrays to an object array.
 
 ---
 
@@ -194,7 +203,7 @@ All configuration is stored in the URL, making every session shareable and repro
 https://fakesheets.app/?seed=1234567&cols=firstName,email,phone&rows=10000&format=csv&locale=en
                               │              │                     │         │          │
                               │              │                     │         │          └─ en | pt_BR
-                              │              │                     │         └─ csv | xlsx
+                              │              │                     │         └─ csv | xlsx | json
                               │              │                     └─ 1 to 1,000,000
                               │              └─ comma-separated column keys
                               └─ integer seed for reproducible data
@@ -232,14 +241,14 @@ The `useUrlState` hook manages SSR-safe hydration:
 
 | Row Count | Format | Target |
 |---|---|---|
-| 1,000 | CSV / XLSX | < 1s |
-| 100,000 | CSV / XLSX | < 5s |
-| 500,000 | CSV | < 15s |
+| 1,000 | CSV / XLSX / JSON | < 1s |
+| 100,000 | CSV / XLSX / JSON | < 5s |
+| 500,000 | CSV / JSON | < 15s |
 | 500,000 | XLSX | < 30s (memory-intensive) |
-| 1,000,000 | CSV | < 30s |
+| 1,000,000 | CSV / JSON | < 30s |
 | 1,000,000 | XLSX | Not recommended |
 
-> For datasets over 500,000 rows, XLSX requires building the entire workbook in browser memory. The app shows a warning and recommends CSV for large exports.
+> For datasets over 500,000 rows, XLSX requires building the entire workbook in browser memory. The app shows a warning and recommends CSV or JSON for large exports.
 
 ---
 

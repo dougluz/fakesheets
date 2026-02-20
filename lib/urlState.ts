@@ -46,7 +46,8 @@ export function parseUrlState(): UrlState {
   const rowCount = rowsParam ? Math.max(1, Math.min(1000000, parseInt(rowsParam, 10))) : DEFAULT_ROW_COUNT;
 
   const formatParam = params.get("format");
-  const format: ExportFormat = formatParam === "xlsx" ? "xlsx" : DEFAULT_FORMAT;
+  const format: ExportFormat =
+    formatParam === "xlsx" ? "xlsx" : formatParam === "json" ? "json" : DEFAULT_FORMAT;
 
   const localeParam = params.get("locale");
   const locale: FakerLocale = localeParam === "pt_BR" ? "pt_BR" : localeParam === "en" ? "en" : detectLocale();

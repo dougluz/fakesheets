@@ -152,7 +152,7 @@ export default function GeneratorForm({ onGenerate, onPreview, disabled }: Gener
               Format
             </label>
             <div className="inline-flex rounded-xl shadow-sm bg-slate-800 p-1" role="group">
-              {(["csv", "xlsx"] as const).map((f) => (
+              {(["csv", "xlsx", "json"] as const).map((f) => (
                 <button
                   key={f}
                   type="button"
