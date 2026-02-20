@@ -21,7 +21,16 @@ const columnGenerators: Record<string, (locale: string) => () => string> = {
   city: (locale) => () => getFaker(locale).location.city(),
   country: (locale) => () => getFaker(locale).location.country(),
   website: (locale) => () => getFaker(locale).internet.url(),
-  avatarUrl: (locale) => () => getFaker(locale).image.avatar(),
+  avatarUrl:  (locale) => () => getFaker(locale).image.avatar(),
+  date:       (locale) => () => getFaker(locale).date.past({ years: 5 }).toISOString().split('T')[0],
+  uuid:       (locale) => () => getFaker(locale).string.uuid(),
+  username:   (locale) => () => getFaker(locale).internet.username(),
+  zipCode:    (locale) => () => getFaker(locale).location.zipCode(),
+  state:      (locale) => () => getFaker(locale).location.state(),
+  price:      (locale) => () => getFaker(locale).commerce.price(),
+  department: (locale) => () => getFaker(locale).commerce.department(),
+  boolean:    (locale) => () => getFaker(locale).datatype.boolean().toString(),
+  number:     (locale) => () => getFaker(locale).number.int({ min: 1, max: 1000 }).toString(),
 };
 
 self.onmessage = async (e: MessageEvent<GeneratorConfig>) => {
