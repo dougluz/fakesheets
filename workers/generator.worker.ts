@@ -1,6 +1,6 @@
 import { faker, fakerPT_BR } from "@faker-js/faker";
 import { GeneratorConfig } from "../lib/types";
-import { buildCSV, buildXLSX } from "../lib/formats";
+import { buildCSV, buildJSON, buildXLSX } from "../lib/formats";
 import { AVAILABLE_COLUMNS } from "../lib/columns";
 
 const CHUNK_SIZE = 5000;
@@ -78,10 +78,14 @@ self.onmessage = async (e: MessageEvent<GeneratorConfig>) => {
     }
 
     const timestamp = Date.now();
-    const ext = format === "csv" ? "csv" : "xlsx";
-    const filename = `fakesheets-${timestamp}.${ext}`;
+    const filename = `fakesheets-${timestamp}.${format}`;
 
-    const blob = format === "csv" ? buildCSV(headers, rows) : await buildXLSX(headers, rows);
+    const blob =
+      format === "csv"
+        ? buildCSV(headers, rows)
+        : format === "json"
+        ? buildJSON(headers, rows)
+        : await buildXLSX(headers, rows);
 
     self.postMessage({ type: "complete", blob, filename });
   } catch (err) {

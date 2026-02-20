@@ -1,4 +1,4 @@
-export type ExportFormat = "csv" | "xlsx";
+export type ExportFormat = "csv" | "xlsx" | "json";
 export type FakerLocale = "en" | "pt_BR";
 
 export interface ColumnDefinition {
@@ -30,7 +30,6 @@ export interface ChunkConfig {
   seed: number;
   locale: FakerLocale;
   workerId: number;
-  includeHeader: boolean;
 }
 
 export type ChunkWorkerMessage =

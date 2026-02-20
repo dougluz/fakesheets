@@ -97,7 +97,7 @@ The app persists all generation settings in the URL, enabling shareable links:
   - `seed` — Random seed for reproducible data generation
   - `cols` — Comma-separated list of selected columns
   - `rows` — Number of rows (1-1,000,000)
-  - `format` — Export format (`csv` or `xlsx`)
+  - `format` — Export format (`csv`, `xlsx`, or `json`)
   - `locale` — Faker locale for data language (`en` or `pt_BR`)
 
 - **Auto-Detect Locale:** When no locale is specified in the URL, the app auto-detects from the user's browser language. Portuguese browsers default to `pt_BR`, others default to `en`.
@@ -166,16 +166,17 @@ Each column maps to a Faker method:
 
 - **CSV:** UTF-8 encoded with BOM, comma-separated, with header row. Values containing commas, quotes, or newlines are properly escaped.
 - **XLSX:** Single sheet named "Data", built with ExcelJS. Header row is bold.
+- **JSON:** Array of objects, one per row, with column keys as property names (e.g. `[{"firstName":"John","email":"john@example.com"}]`). No pretty-printing for large files. MIME type: `application/json`.
 
 ### UI Requirements
 
 - Single page, no routing needed
-- Form section: column picker, row count input (default 1,000, max 1,000,000), format toggle (CSV/XLSX), language selector (English/Português)
+- Form section: column picker, row count input (default 1,000, max 1,000,000), format toggle (CSV/XLSX/JSON), language selector (English/Português)
 - Preview button → shows first 5 rows in a table
 - Generate button → disables during generation, shows progress bar
 - Progress bar: percentage + row count (e.g., "45,000 / 100,000 rows")
 - Performance warning: shown when XLSX + > 500k rows
-- Download: auto-trigger browser download when blob is ready. Filename format: `fakesheets-{timestamp}.{csv|xlsx}`
+- Download: auto-trigger browser download when blob is ready. Filename format: `fakesheets-{timestamp}.{csv|xlsx|json}`
 - Mobile-friendly responsive layout
 
 ## Constraints

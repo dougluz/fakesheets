@@ -39,19 +39,10 @@ function escapeCSVField(field: string): string {
   return field;
 }
 
-function buildCSVChunk(headers: string[], rows: string[][]): string {
-  const lines: string[] = [];
-  lines.push(headers.map(escapeCSVField).join(","));
-  for (const row of rows) {
-    lines.push(row.map(escapeCSVField).join(","));
-  }
-  return lines.join("\n");
-}
-
 self.onmessage = (e: MessageEvent<ChunkConfig>) => {
   try {
     const config = e.data;
-    const { columns, startRow, endRow, format, seed, locale, workerId, includeHeader } = config;
+    const { columns, startRow, endRow, format, seed, locale, workerId } = config;
 
     const activeFaker = getFaker(locale);
     activeFaker.seed(seed + workerId);
@@ -86,9 +77,7 @@ self.onmessage = (e: MessageEvent<ChunkConfig>) => {
     }
 
     if (format === "csv") {
-      const csvData = includeHeader
-        ? buildCSVChunk(headers, rows)
-        : rows.map((row) => row.map(escapeCSVField).join(",")).join("\n");
+      const csvData = rows.map((row) => row.map(escapeCSVField).join(",")).join("\n");
       self.postMessage({
         type: "chunk-complete",
         workerId,
